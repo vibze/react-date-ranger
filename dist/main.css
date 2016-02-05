@@ -1,0 +1,96 @@
+.react-date-ranger {
+  padding: 3px 5px;
+}
+
+.react-date-ranger .segment {
+  display: inline-block;
+  margin-right: 15px;
+}
+
+.react-date-ranger label {
+  color: #aaa;
+  display: block;
+  font-size: .8em;
+}
+
+.react-date-ranger-display:hover {
+  background: #eee;
+  cursor: pointer;
+}
+
+.react-date-ranger-panel {
+  background: #fff;
+  box-shadow: 0 0 6px rgba(0,0,0,0.2);
+  position: absolute;
+  padding: 15px;
+  text-align: right;
+}
+
+.react-date-ranger-panel > div {
+  float: left;
+  margin-right: 25px;
+  text-align: left;
+}
+.react-date-ranger-panel > div label {
+  margin-bottom: 15px;
+}
+
+.react-date-ranger-period-picker {
+}
+
+.react-date-ranger-period-picker button {
+  background: #f0f6f7;
+  border: none;
+  display: block;
+  margin-bottom: 2px;
+  width: 3em;
+  height: 3em;
+}
+
+.react-date-ranger-period-picker button.selected {
+  background: #febc9c;
+}
+
+.react-date-ranger-calendar-toolbar {
+  display: block;
+  text-align: center;
+  width: 250px;
+}
+
+.react-date-ranger-calendar {
+  padding: 5px;
+  width: 250px;
+  min-height: 200px;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+.react-date-ranger-calendar td {
+  padding: 1px;
+}
+
+.react-date-ranger-calendar button {
+  background: #f0f6f7;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.react-date-ranger-calendar button:hover {
+  background: #bccbcd;
+}
+
+.react-date-ranger-calendar button:disabled {
+  background: none;
+  cursor: default;
+}
+
+.react-date-ranger-calendar button.selected {
+  background: #febc9c;
+}
+
+.react-date-ranger-calendar button.blurred {
+  opacity: 0.5;
+}

@@ -1,0 +1,26 @@
+{
+  "name": "react-date-ranger",
+  "version": "1.0.0",
+  "description": "React date ranger",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "vten",
+  "license": "MIT",
+  "devDependencies": {
+    "coffee-reactify": "^4.0.0",
+    "gulp": "^3.9.0",
+    "gulp-browserify": "^0.5.1",
+    "gulp-cjsx": "^3.0.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-util": "^3.0.7"
+  },
+  "dependencies": {
+    "classnames": "^2.2.3",
+    "moment": "^2.11.2",
+    "react": "^0.14.3",
+    "react-dom": "^0.14.3",
+    "underscore": "^1.8.3"
+  }
+}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+
+  <head>
+    <link rel="stylesheet" href="dist/main.css" />
+    <script type="text/javascript" src="dist/main.js"></script>
+    <meta http-equiv="content-type" content="text/html; charset=UTF8">
+  </head>
+
+  <body>
+    <h4>Default settings</h4>
+    <p>
+      Period is month, default range is start and end of current month.
+    </p>
+    <div id="default"></div>
+    <script>
+      ReactDOM.render(
+        React.createElement(DateRanger, {}),
+        document.getElementById('default')
+      );
+    </script>
+
+    <h4>Allowed range</h4>
+    <p>
+      Allowed range is ['2013-01-15', '2018-08-04'].
+    </p>
+    <div id="allowed-range"></div>
+    <script>
+      ReactDOM.render(
+        React.createElement(DateRanger, {
+          allowedRange: ['2013-01-15', '2018-08-04']
+        }),
+        document.getElementById('allowed-range')
+      );
+    </script>
+  </body>
+
+</html>
