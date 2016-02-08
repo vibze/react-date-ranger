@@ -1,77 +1,53 @@
 React = require('react')
 moment = require('moment')
 cx = require('classnames')
-
-
-rangeSize = 12
+Calendar = require('./Calendar.react')
 
 
 module.exports = React.createClass(
   propTypes:
     allowedRange: React.PropTypes.array  # Moment.js objects
     date: React.PropTypes.object.isRequired  # Moment.js object
+    highlightToDate: React.PropTypes.object.isRequired  # Moment.js object
     onChange: React.PropTypes.func
 
-  getInitialState: ->
-    year: Math.floor(@props.date.year()/rangeSize)*rangeSize
-
   render: ->
-    prevDisabled = @props.allowedRange and @state.year <= @props.allowedRange[0].year()
-    nextDisabled = @props.allowedRange and @state.year+rangeSize >= @props.allowedRange[1].year()
-
-    <div className="react-date-ranger-year-picker">
-      <div className="react-date-ranger-calendar-toolbar">
-        <button disabled={prevDisabled} onClick={@prevYears}>&lt;</button>
-        {@state.year}-{@state.year+rangeSize-1}
-        <button disabled={nextDisabled} onClick={@nextYears}>&gt;</button>
-      </div>
-      <table className="react-date-ranger-calendar">
-        <tbody>
-          {@renderDates()}
-        </tbody>
-      </table>
-    </div>
-
-  nextYears: ->
-    @setState(year: @state.year+rangeSize)
-
-  prevYears: ->
-    @setState(year: @state.year-rangeSize)
-
-  renderDates: ->
-    curr = moment(@state.year, 'YYYY').startOf('year')
-    end = moment(@state.year+rangeSize-1, 'YYYY').endOf('year')
+    r = 12
 
     # Because moment.js isBetween method is exclusive
     if @props.allowedRange
       allowedMin = moment(@props.allowedRange[0]).subtract(1, 'years')
       allowedMax = moment(@props.allowedRange[1]).add(1, 'years')
 
-    i = 1
-    cells = []
-    rows = []
-    while curr.isSameOrBefore(end)
-      disabled = @props.allowedRange and not curr.isBetween(allowedMin, allowedMax, 'year')
+    if @props.highlightToDate
+      if @props.date.isSameOrBefore(@props.highlightToDate)
+        hlStart = @props.date
+        hlEnd = moment(@props.highlightToDate).add(1, 'years')
+      else
+        hlStart = moment(@props.highlightToDate).subtract(1, 'years')
+        hlEnd = @props.date
 
-      cells.push(
-        <td key={i}>
-          <button
-            className={cx("year", "selected": curr.year() == @props.date.year())}
-            onClick={@_onYearClick}
-            value={curr.format('YYYY-MM-DD')}
-            disabled={disabled}>
-            {curr.format('YYYY')}
-          </button>
-        </td>
-      )
+    <Calendar
+      page={@props.date.year()}
+      prevDisabled={(page) => @props.allowedRange and page <= @props.allowedRange[0].year()}
+      nextDisabled={(page) => @props.allowedRange and page+r >= @props.allowedRange[1].year()}
+      prevPage={(page) -> page-r}
+      nextPage={(page) -> page+r}
+      headerRenderer={(page) -> "#{page} - #{page+r-1}"}
 
-      if i > 0 and i%3 == 0
-        rows.push(<tr key={i/3}>{cells}</tr>)
-        cells = []
+      calStartDate={(page) -> moment(page, 'YYYY').startOf('year')}
+      calEndDate={(page) -> moment(page+r-1, 'YYYY').endOf('year')}
+      calDateIncrement={(date) -> date.add(1, 'years')}
+      calCellsInRow={3}
 
-      curr.add(1, 'years') and i++
-    rows
+      dateIsDisabled={(date) => @props.allowedRange and not date.isBetween(allowedMin, allowedMax, 'year')}
+      dateIsHighlighted={(date) => @props.highlightToDate and date.isBetween(hlStart, hlEnd, 'year')}
+      dateIsSelected={(date) => date.format('YYYY') == @props.date.format('YYYY')}
+      dateFormat={(date) -> date.format('YYYY')}
 
-  _onYearClick: (e) ->
-    @props.onChange(moment(e.currentTarget.value))
+      onDateClick={@_onQuarterClick}
+       />
+
+  _onQuarterClick: (value) ->
+    @props.onChange(moment(value))
 )

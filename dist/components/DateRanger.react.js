@@ -1,4 +1,4 @@
-var DatePickers, PeriodPicker, React, ReactDOM, cx, getDefaultRange, moment;
+var DatePickers, PeriodPicker, React, ReactDOM, cx, getDefaultRange, moment, momentQueryKeywords;
 
 React = require('react');
 
@@ -14,11 +14,20 @@ DatePickers = {
   Y: require('./YearPicker.react'),
   Q: require('./QuarterPicker.react'),
   M: require('./MonthPicker.react'),
-  W: require('./WeekPicker.react')
+  W: require('./WeekPicker.react'),
+  D: require('./DayPicker.react')
 };
 
 getDefaultRange = function() {
   return [moment().startOf('month'), moment().endOf('month')];
+};
+
+momentQueryKeywords = {
+  Y: 'year',
+  Q: 'quarter',
+  M: 'month',
+  W: 'isoWeek',
+  D: 'day'
 };
 
 module.exports = React.createClass({
@@ -27,37 +36,36 @@ module.exports = React.createClass({
     allowedRange: React.PropTypes.array,
     allowedRangeFormat: React.PropTypes.string,
     range: React.PropTypes.array,
-    period: React.PropTypes.string
+    period: React.PropTypes.string,
+    onChange: React.PropTypes.func
   },
   getDefaultProps: function() {
     return {
       allowedPeriods: "YQMWD",
       allowedRange: null,
       allowedRangeFormat: 'YYYY-MM-DD',
-      range: getDefaultRange(),
-      period: "M"
+      range: null,
+      period: null
     };
   },
   getInitialState: function() {
     return {
-      range: this.props.range.slice(0),
-      period: this.props.period,
-      showPicker: false
+      range: this.props.range,
+      period: this.props.period
     };
   },
-  render: function() {
-    return React.createElement("div", {
-      "className": "react-date-ranger"
-    }, React.createElement("div", {
-      "className": "react-date-ranger-display",
-      "onClick": this.showPicker
-    }, React.createElement("div", {
-      "className": "segment"
-    }, React.createElement("label", null, "Период"), this.renderPeriod(this.props.period)), React.createElement("div", {
-      "className": "segment"
-    }, React.createElement("label", null, "Диапазон"), this.props.range.map(this.renderDate).join(' - '))), (this.state.showPicker ? this.renderPanel() : void 0));
+  componentWillMount: function() {
+    if (this.state.period === null) {
+      this.state.period = this.props.allowedPeriods[0];
+    }
+    if (this.state.range === null) {
+      return this.state.range = [moment().startOf(momentQueryKeywords[this.state.period]), moment().endOf(momentQueryKeywords[this.state.period])];
+    }
   },
-  renderPanel: function() {
+  componentDidMount: function() {
+    return this.props.onChange(this.state.range);
+  },
+  render: function() {
     var DatePicker, parsedAllowedRange;
     DatePicker = DatePickers[this.state.period];
     if (this.props.allowedRange) {
@@ -70,24 +78,22 @@ module.exports = React.createClass({
       null;
     }
     return React.createElement("div", {
-      "className": "react-date-ranger-panel"
-    }, React.createElement("div", null, React.createElement("label", null, "Период"), React.createElement(PeriodPicker, {
+      "className": "react-date-ranger"
+    }, React.createElement(PeriodPicker, {
       "period": this.state.period,
       "allowedPeriods": this.props.allowedPeriods,
       "onChange": this._onPeriodChange
-    })), React.createElement("div", null, React.createElement("label", null, "Начало"), React.createElement(DatePicker, {
+    }), React.createElement("div", null, React.createElement(DatePicker, {
       "allowedRange": parsedAllowedRange,
       "date": this.state.range[0],
+      "highlightToDate": this.state.range[1],
       "onChange": this._onFromChange
-    })), React.createElement("div", null, React.createElement("label", null, "Конец"), React.createElement(DatePicker, {
+    }), React.createElement(DatePicker, {
       "allowedRange": parsedAllowedRange,
       "date": this.state.range[1],
+      "highlightToDate": this.state.range[0],
       "onChange": this._onToChange
-    })), React.createElement("br", null), React.createElement("button", {
-      "onClick": this._onSubmit
-    }, "Применить"), React.createElement("button", {
-      "onClick": this._onCancel
-    }, "Отмена"));
+    })));
   },
   renderDate: function(date) {
     var dict;
@@ -111,38 +117,26 @@ module.exports = React.createClass({
     };
     return dict[period];
   },
-  showPicker: function() {
-    return this.setState({
-      showPicker: true
-    });
-  },
   _onPeriodChange: function(newPeriod) {
+    var updatedRange;
+    if (newPeriod === "Y" || newPeriod === "Q" || newPeriod === "M") {
+      updatedRange = [this.state.range[0].endOf('isoWeek').startOf(momentQueryKeywords[newPeriod]), this.state.range[1].startOf('isoWeek').endOf(momentQueryKeywords[newPeriod])];
+    } else {
+      updatedRange = [this.state.range[0].startOf(momentQueryKeywords[newPeriod]), this.state.range[1].endOf(momentQueryKeywords[newPeriod])];
+    }
     return this.setState({
-      period: newPeriod
+      period: newPeriod,
+      range: updatedRange
     });
   },
   _onFromChange: function(newFrom) {
-    this.state.range[0] = newFrom;
+    this.state.range[0] = newFrom.startOf(momentQueryKeywords[this.state.period]);
+    this.props.onChange(this.state.range);
     return this.forceUpdate();
   },
   _onToChange: function(newTo) {
-    this.state.range[1] = newTo;
+    this.state.range[1] = newTo.endOf(momentQueryKeywords[this.state.period]);
+    this.props.onChange(this.state.range);
     return this.forceUpdate();
-  },
-  _onSubmit: function(e) {
-    this.setState({
-      showPicker: false
-    });
-    console.log(this.state.period);
-    return console.log(this.state.range);
-  },
-  _onCancel: function(e) {
-    this.setState({
-      showPicker: false
-    });
-    return this.setState({
-      period: this.props.period,
-      range: this.props.range.slice(0)
-    });
   }
 });

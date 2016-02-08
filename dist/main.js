@@ -22654,7 +22654,109 @@ module.exports = validateDOMNesting;
 module.exports = require('./lib/React');
 
 },{"./lib/React":55}],161:[function(require,module,exports){
-var DatePickers, PeriodPicker, React, ReactDOM, cx, getDefaultRange, moment;
+var React, cx;
+
+React = require('react');
+
+cx = require('classnames');
+
+module.exports = React.createClass({
+  propTypes: {
+    page: React.PropTypes.any.isRequired,
+    prevDisabled: React.PropTypes.func.isRequired,
+    nextDisabled: React.PropTypes.func.isRequired,
+    prevPage: React.PropTypes.func.isRequired,
+    nextPage: React.PropTypes.func.isRequired,
+    headerRenderer: React.PropTypes.func.isRequired,
+    calStartDate: React.PropTypes.func.isRequired,
+    calEndDate: React.PropTypes.func.isRequired,
+    calDateIncrement: React.PropTypes.func.isRequired,
+    calCellsInRow: React.PropTypes.number.isRequired,
+    dateIsDisabled: React.PropTypes.func.isRequired,
+    dateIsHighlighted: React.PropTypes.func.isRequired,
+    dateIsSelected: React.PropTypes.func.isRequired,
+    dateIsBlurred: React.PropTypes.func,
+    dateFormat: React.PropTypes.func.isRequired,
+    onDateClick: React.PropTypes.func
+  },
+  getDefaultProps: function() {
+    return {
+      page: null,
+      dateIsBlurred: function() {
+        return false;
+      }
+    };
+  },
+  getInitialState: function() {
+    return {
+      page: this.props.page
+    };
+  },
+  render: function() {
+    return React.createElement("div", {
+      "className": "react-date-ranger-date-picker"
+    }, React.createElement("div", {
+      "className": "react-date-ranger-calendar-toolbar"
+    }, React.createElement("button", {
+      "disabled": this.props.prevDisabled(this.state.page),
+      "onClick": this._onPrevPageClick
+    }, "❮"), this.props.headerRenderer(this.state.page), React.createElement("button", {
+      "disabled": this.props.nextDisabled(this.state.page),
+      "onClick": this._onNextPageClick
+    }, "❯")), React.createElement("table", {
+      "className": "react-date-ranger-calendar"
+    }, React.createElement("tbody", null, this.renderDates())));
+  },
+  renderDates: function() {
+    var cells, classString, curr, end, i, rows;
+    curr = this.props.calStartDate(this.state.page);
+    end = this.props.calEndDate(this.state.page);
+    i = 1;
+    cells = [];
+    rows = [];
+    while (curr.isSameOrBefore(end)) {
+      classString = cx({
+        "selected": this.props.dateIsSelected(curr),
+        "highlighted": this.props.dateIsHighlighted(curr),
+        "blurred": this.props.dateIsBlurred(curr, this.state.page)
+      });
+      cells.push(React.createElement("td", {
+        "key": i
+      }, React.createElement("button", {
+        "className": classString,
+        "onClick": this._onDateClick,
+        "value": curr.format('YYYY-MM-DD'),
+        "disabled": this.props.dateIsDisabled(curr)
+      }, this.props.dateFormat(curr))));
+      if (i > 0 && i % this.props.calCellsInRow === 0) {
+        rows.push(React.createElement("tr", {
+          "key": i / this.props.calCellsInRow
+        }, cells));
+        cells = [];
+      }
+      this.props.calDateIncrement(curr) && i++;
+    }
+    return rows;
+  },
+  _onPrevPageClick: function() {
+    return this.setState({
+      page: this.props.prevPage(this.state.page)
+    });
+  },
+  _onNextPageClick: function() {
+    return this.setState({
+      page: this.props.nextPage(this.state.page)
+    });
+  },
+  _onDateClick: function(e) {
+    return this.props.onDateClick(e.currentTarget.value);
+  }
+});
+
+
+
+},{"classnames":1,"react":160}],162:[function(require,module,exports){
+var DatePickers, PeriodPicker, React, ReactDOM, cx, getDefaultRange, moment, momentQueryKeywords;
 
 React = require('react');
 
@@ -22670,11 +22772,20 @@ DatePickers = {
   Y: require('./YearPicker.react'),
   Q: require('./QuarterPicker.react'),
   M: require('./MonthPicker.react'),
-  W: require('./WeekPicker.react')
+  W: require('./WeekPicker.react'),
+  D: require('./DayPicker.react')
 };
 
 getDefaultRange = function() {
   return [moment().startOf('month'), moment().endOf('month')];
+};
+
+momentQueryKeywords = {
+  Y: 'year',
+  Q: 'quarter',
+  M: 'month',
+  W: 'isoWeek',
+  D: 'day'
 };
 
 module.exports = React.createClass({
@@ -22683,37 +22794,36 @@ module.exports = React.createClass({
     allowedRange: React.PropTypes.array,
     allowedRangeFormat: React.PropTypes.string,
     range: React.PropTypes.array,
-    period: React.PropTypes.string
+    period: React.PropTypes.string,
+    onChange: React.PropTypes.func
   },
   getDefaultProps: function() {
     return {
       allowedPeriods: "YQMWD",
       allowedRange: null,
       allowedRangeFormat: 'YYYY-MM-DD',
-      range: getDefaultRange(),
-      period: "M"
+      range: null,
+      period: null
     };
   },
   getInitialState: function() {
     return {
-      range: this.props.range.slice(0),
-      period: this.props.period,
-      showPicker: false
+      range: this.props.range,
+      period: this.props.period
     };
   },
-  render: function() {
-    return React.createElement("div", {
-      "className": "react-date-ranger"
-    }, React.createElement("div", {
-      "className": "react-date-ranger-display",
-      "onClick": this.showPicker
-    }, React.createElement("div", {
-      "className": "segment"
-    }, React.createElement("label", null, "Период"), this.renderPeriod(this.props.period)), React.createElement("div", {
-      "className": "segment"
-    }, React.createElement("label", null, "Диапазон"), this.props.range.map(this.renderDate).join(' - '))), (this.state.showPicker ? this.renderPanel() : void 0));
+  componentWillMount: function() {
+    if (this.state.period === null) {
+      this.state.period = this.props.allowedPeriods[0];
+    }
+    if (this.state.range === null) {
+      return this.state.range = [moment().startOf(momentQueryKeywords[this.state.period]), moment().endOf(momentQueryKeywords[this.state.period])];
+    }
   },
-  renderPanel: function() {
+  componentDidMount: function() {
+    return this.props.onChange(this.state.range);
+  },
+  render: function() {
     var DatePicker, parsedAllowedRange;
     DatePicker = DatePickers[this.state.period];
     if (this.props.allowedRange) {
@@ -22726,24 +22836,22 @@ module.exports = React.createClass({
       null;
     }
     return React.createElement("div", {
-      "className": "react-date-ranger-panel"
-    }, React.createElement("div", null, React.createElement("label", null, "Период"), React.createElement(PeriodPicker, {
+      "className": "react-date-ranger"
+    }, React.createElement(PeriodPicker, {
       "period": this.state.period,
       "allowedPeriods": this.props.allowedPeriods,
       "onChange": this._onPeriodChange
-    })), React.createElement("div", null, React.createElement("label", null, "Начало"), React.createElement(DatePicker, {
+    }), React.createElement("div", null, React.createElement(DatePicker, {
       "allowedRange": parsedAllowedRange,
       "date": this.state.range[0],
+      "highlightToDate": this.state.range[1],
       "onChange": this._onFromChange
-    })), React.createElement("div", null, React.createElement("label", null, "Конец"), React.createElement(DatePicker, {
+    }), React.createElement(DatePicker, {
       "allowedRange": parsedAllowedRange,
       "date": this.state.range[1],
+      "highlightToDate": this.state.range[0],
       "onChange": this._onToChange
-    })), React.createElement("br", null), React.createElement("button", {
-      "onClick": this._onSubmit
-    }, "Применить"), React.createElement("button", {
-      "onClick": this._onCancel
-    }, "Отмена"));
+    })));
   },
   renderDate: function(date) {
     var dict;
@@ -22767,46 +22875,34 @@ module.exports = React.createClass({
     };
     return dict[period];
   },
-  showPicker: function() {
-    return this.setState({
-      showPicker: true
-    });
-  },
   _onPeriodChange: function(newPeriod) {
+    var updatedRange;
+    if (newPeriod === "Y" || newPeriod === "Q" || newPeriod === "M") {
+      updatedRange = [this.state.range[0].endOf('isoWeek').startOf(momentQueryKeywords[newPeriod]), this.state.range[1].startOf('isoWeek').endOf(momentQueryKeywords[newPeriod])];
+    } else {
+      updatedRange = [this.state.range[0].startOf(momentQueryKeywords[newPeriod]), this.state.range[1].endOf(momentQueryKeywords[newPeriod])];
+    }
     return this.setState({
-      period: newPeriod
+      period: newPeriod,
+      range: updatedRange
     });
   },
   _onFromChange: function(newFrom) {
-    this.state.range[0] = newFrom;
+    this.state.range[0] = newFrom.startOf(momentQueryKeywords[this.state.period]);
+    this.props.onChange(this.state.range);
     return this.forceUpdate();
   },
   _onToChange: function(newTo) {
-    this.state.range[1] = newTo;
+    this.state.range[1] = newTo.endOf(momentQueryKeywords[this.state.period]);
+    this.props.onChange(this.state.range);
     return this.forceUpdate();
-  },
-  _onSubmit: function(e) {
-    this.setState({
-      showPicker: false
-    });
-    console.log(this.state.period);
-    return console.log(this.state.range);
-  },
-  _onCancel: function(e) {
-    this.setState({
-      showPicker: false
-    });
-    return this.setState({
-      period: this.props.period,
-      range: this.props.range.slice(0)
-    });
   }
 });
 
 
 
-},{"./MonthPicker.react":162,"./PeriodPicker.react":163,"./QuarterPicker.react":164,"./WeekPicker.react":165,"./YearPicker.react":166,"classnames":1,"moment":29,"react":160,"react-dom":31}],162:[function(require,module,exports){
-var React, cx, moment;
+},{"./DayPicker.react":163,"./MonthPicker.react":164,"./PeriodPicker.react":165,"./QuarterPicker.react":166,"./WeekPicker.react":167,"./YearPicker.react":168,"classnames":1,"moment":29,"react":160,"react-dom":31}],163:[function(require,module,exports){
+var Calendar, React, cx, moment;
 
 React = require('react');
 
@@ -22814,86 +22910,188 @@ moment = require('moment');
 
 cx = require('classnames');
 
+Calendar = require('./Calendar.react');
+
 module.exports = React.createClass({
   propTypes: {
     allowedRange: React.PropTypes.array,
     date: React.PropTypes.object.isRequired,
+    highlightToDate: React.PropTypes.object.isRequired,
     onChange: React.PropTypes.func
   },
-  getInitialState: function() {
-    return {
-      year: this.props.date.year()
-    };
-  },
   render: function() {
-    var nextDisabled, prevDisabled;
-    prevDisabled = this.props.allowedRange && this.state.year <= this.props.allowedRange[0].year();
-    nextDisabled = this.props.allowedRange && this.state.year >= this.props.allowedRange[1].year();
-    return React.createElement("div", {
-      "className": "react-date-ranger-month-picker"
-    }, React.createElement("div", {
-      "className": "react-date-ranger-calendar-toolbar"
-    }, React.createElement("button", {
-      "disabled": prevDisabled,
-      "onClick": this.prevYear
-    }, "\x3C"), this.state.year, React.createElement("button", {
-      "disabled": nextDisabled,
-      "onClick": this.nextYear
-    }, "\x3E")), React.createElement("table", {
-      "className": "react-date-ranger-calendar"
-    }, React.createElement("tbody", null, this.renderDates())));
-  },
-  nextYear: function() {
-    return this.setState({
-      year: this.state.year + 1
-    });
-  },
-  prevYear: function() {
-    return this.setState({
-      year: this.state.year - 1
-    });
-  },
-  renderDates: function() {
-    var allowedMax, allowedMin, cells, curr, disabled, end, i, rows;
-    curr = moment(this.state.year, 'YYYY').startOf('year');
-    end = moment(this.state.year, 'YYYY').endOf('year');
+    var allowedMax, allowedMin, hlEnd, hlStart;
     if (this.props.allowedRange) {
-      allowedMin = moment(this.props.allowedRange[0]).subtract(1, 'months');
-      allowedMax = moment(this.props.allowedRange[1]).add(1, 'months');
+      allowedMin = moment(this.props.allowedRange[0]);
+      allowedMax = moment(this.props.allowedRange[1]);
     }
-    i = 1;
-    cells = [];
-    rows = [];
-    while (curr.isSameOrBefore(end)) {
-      disabled = this.props.allowedRange && !curr.isBetween(allowedMin, allowedMax, 'month');
-      cells.push(React.createElement("td", {
-        "key": i
-      }, React.createElement("button", {
-        "className": cx("month", {
-          "selected": curr.format('YYYYMM') === this.props.date.format('YYYYMM')
-        }),
-        "onClick": this._onMonthClick,
-        "value": curr.format('YYYY-MM-DD'),
-        "disabled": disabled
-      }, curr.format('MMM'))));
-      if (i > 0 && i % 3 === 0) {
-        rows.push(React.createElement("tr", {
-          "key": i / 3
-        }, cells));
-        cells = [];
+    if (this.props.highlightToDate) {
+      if (this.props.date.isSameOrBefore(this.props.highlightToDate)) {
+        hlStart = moment(this.props.date);
+        hlEnd = moment(this.props.highlightToDate).add(1, 'days');
+      } else {
+        hlStart = moment(this.props.highlightToDate).subtract(1, 'days');
+        hlEnd = moment(this.props.date);
       }
-      curr.add(1, 'months') && i++;
     }
-    return rows;
+    return React.createElement(Calendar, {
+      "page": moment(this.props.date),
+      "prevDisabled": ((function(_this) {
+        return function(page) {
+          return _this.props.allowedRange && page.isSameOrBefore(allowedMin, 'month');
+        };
+      })(this)),
+      "nextDisabled": ((function(_this) {
+        return function(page) {
+          return _this.props.allowedRange && page.isSameOrAfter(allowedMax, 'month');
+        };
+      })(this)),
+      "prevPage": (function(page) {
+        return page.subtract(1, 'months');
+      }),
+      "nextPage": (function(page) {
+        return page.add(1, 'months');
+      }),
+      "headerRenderer": (function(page) {
+        return page.format('MMM YYYY');
+      }),
+      "calStartDate": (function(page) {
+        return moment(page).startOf('month').startOf('isoWeek');
+      }),
+      "calEndDate": (function(page) {
+        return moment(page).endOf('month').endOf('isoWeek');
+      }),
+      "calDateIncrement": (function(date) {
+        date.add(1, 'days');
+        return date;
+      }),
+      "calCellsInRow": 7.,
+      "dateIsDisabled": ((function(_this) {
+        return function(date) {
+          return _this.props.allowedRange && !date.isBetween(allowedMin, allowedMax, 'day');
+        };
+      })(this)),
+      "dateIsHighlighted": ((function(_this) {
+        return function(date) {
+          return _this.props.highlightToDate && date.isBetween(hlStart, hlEnd, 'day');
+        };
+      })(this)),
+      "dateIsSelected": ((function(_this) {
+        return function(date) {
+          return date.format('YYYYMMDD') === _this.props.date.format('YYYYMMDD');
+        };
+      })(this)),
+      "dateIsBlurred": ((function(_this) {
+        return function(date, page) {
+          return date.format('YYYYMM') !== page.format('YYYYMM');
+        };
+      })(this)),
+      "dateFormat": (function(date) {
+        return date.format('DD');
+      }),
+      "onDateClick": this._onDayClick
+    });
   },
-  _onMonthClick: function(e) {
-    return this.props.onChange(moment(e.currentTarget.value));
+  _onDayClick: function(value) {
+    return this.props.onChange(moment(value));
   }
 });
 
 
 
-},{"classnames":1,"moment":29,"react":160}],163:[function(require,module,exports){
+},{"./Calendar.react":161,"classnames":1,"moment":29,"react":160}],164:[function(require,module,exports){
+var Calendar, React, cx, moment;
+
+React = require('react');
+
+moment = require('moment');
+
+cx = require('classnames');
+
+Calendar = require('./Calendar.react');
+
+module.exports = React.createClass({
+  propTypes: {
+    allowedRange: React.PropTypes.array,
+    date: React.PropTypes.object.isRequired,
+    highlightToDate: React.PropTypes.object.isRequired,
+    onChange: React.PropTypes.func
+  },
+  render: function() {
+    var allowedMax, allowedMin, hlEnd, hlStart;
+    if (this.props.allowedRange) {
+      allowedMin = moment(this.props.allowedRange[0]).subtract(1, 'months');
+      allowedMax = moment(this.props.allowedRange[1]).add(1, 'months');
+    }
+    if (this.props.highlightToDate) {
+      if (this.props.date.isSameOrBefore(this.props.highlightToDate)) {
+        hlStart = this.props.date;
+        hlEnd = moment(this.props.highlightToDate).add(1, 'months');
+      } else {
+        hlStart = moment(this.props.highlightToDate).subtract(1, 'months');
+        hlEnd = this.props.date;
+      }
+    }
+    return React.createElement(Calendar, {
+      "page": this.props.date.year(),
+      "prevDisabled": ((function(_this) {
+        return function(page) {
+          return _this.props.allowedRange && page <= _this.props.allowedRange[0].year();
+        };
+      })(this)),
+      "nextDisabled": ((function(_this) {
+        return function(page) {
+          return _this.props.allowedRange && page >= _this.props.allowedRange[1].year();
+        };
+      })(this)),
+      "prevPage": (function(page) {
+        return page - 1;
+      }),
+      "nextPage": (function(page) {
+        return page + 1;
+      }),
+      "headerRenderer": (function(page) {
+        return page;
+      }),
+      "calStartDate": (function(page) {
+        return moment(page, 'YYYY').startOf('year');
+      }),
+      "calEndDate": (function(page) {
+        return moment(page, 'YYYY').endOf('year');
+      }),
+      "calDateIncrement": (function(date) {
+        return date.add(1, 'months');
+      }),
+      "calCellsInRow": 3.,
+      "dateIsDisabled": ((function(_this) {
+        return function(date) {
+          return _this.props.allowedRange && !date.isBetween(allowedMin, allowedMax, 'month');
+        };
+      })(this)),
+      "dateIsHighlighted": ((function(_this) {
+        return function(date) {
+          return _this.props.highlightToDate && date.isBetween(hlStart, hlEnd, 'month');
+        };
+      })(this)),
+      "dateIsSelected": ((function(_this) {
+        return function(date) {
+          return date.format('YYYYMM') === _this.props.date.format('YYYYMM');
+        };
+      })(this)),
+      "dateFormat": (function(date) {
+        return date.format('MMM');
+      }),
+      "onDateClick": this._onMonthClick
+    });
+  },
+  _onMonthClick: function(value) {
+    return this.props.onChange(moment(value));
+  }
+});
+
+
+
+},{"./Calendar.react":161,"classnames":1,"moment":29,"react":160}],165:[function(require,module,exports){
 var React, cx;
 
 React = require('react');
@@ -22936,8 +23134,8 @@ module.exports = React.createClass({
 
 
 
-},{"classnames":1,"react":160}],164:[function(require,module,exports){
-var React, cx, moment, rangeSize;
+},{"classnames":1,"react":160}],166:[function(require,module,exports){
+var Calendar, React, cx, moment;
 
 React = require('react');
 
@@ -22945,89 +23143,92 @@ moment = require('moment');
 
 cx = require('classnames');
 
-rangeSize = 4;
+Calendar = require('./Calendar.react');
 
 module.exports = React.createClass({
   propTypes: {
     allowedRange: React.PropTypes.array,
     date: React.PropTypes.object.isRequired,
+    highlightToDate: React.PropTypes.object.isRequired,
     onChange: React.PropTypes.func
   },
-  getInitialState: function() {
-    return {
-      year: Math.floor(this.props.date.year() / rangeSize) * rangeSize
-    };
-  },
   render: function() {
-    var nextDisabled, prevDisabled;
-    prevDisabled = this.props.allowedRange && this.state.year <= this.props.allowedRange[0].year();
-    nextDisabled = this.props.allowedRange && this.state.year + rangeSize >= this.props.allowedRange[1].year();
-    return React.createElement("div", {
-      "className": "react-date-ranger-quarter-picker"
-    }, React.createElement("div", {
-      "className": "react-date-ranger-calendar-toolbar"
-    }, React.createElement("button", {
-      "disabled": prevDisabled,
-      "onClick": this.prevYears
-    }, "\x3C"), this.state.year, "-", this.state.year + rangeSize - 1, React.createElement("button", {
-      "disabled": nextDisabled,
-      "onClick": this.nextYears
-    }, "\x3E")), React.createElement("table", {
-      "className": "react-date-ranger-calendar"
-    }, React.createElement("tbody", null, this.renderDates())));
-  },
-  nextYears: function() {
-    return this.setState({
-      year: this.state.year + rangeSize
-    });
-  },
-  prevYears: function() {
-    return this.setState({
-      year: this.state.year - rangeSize
-    });
-  },
-  renderDates: function() {
-    var allowedMax, allowedMin, cells, curr, disabled, end, i, rows;
-    curr = moment(this.state.year, 'YYYY').startOf('year');
-    end = moment(this.state.year + rangeSize - 1, 'YYYY').endOf('year');
+    var allowedMax, allowedMin, hlEnd, hlStart, r;
+    r = 4;
     if (this.props.allowedRange) {
       allowedMin = moment(this.props.allowedRange[0]).subtract(1, 'quarters');
       allowedMax = moment(this.props.allowedRange[1]).add(1, 'quarters');
     }
-    i = 1;
-    cells = [];
-    rows = [];
-    while (curr.isSameOrBefore(end)) {
-      disabled = this.props.allowedRange && !curr.isBetween(allowedMin, allowedMax, 'quarter');
-      cells.push(React.createElement("td", {
-        "key": i
-      }, React.createElement("button", {
-        "className": cx("quarter", {
-          "selected": curr.format('YYYYQ') === this.props.date.format('YYYYQ')
-        }),
-        "onClick": this._onYearClick,
-        "value": curr.format('YYYY-MM-DD'),
-        "disabled": disabled
-      }, curr.format('YYYY-[Q]Q'))));
-      if (i > 0 && i % 4 === 0) {
-        rows.push(React.createElement("tr", {
-          "key": i / 4
-        }, cells));
-        cells = [];
+    if (this.props.highlightToDate) {
+      if (this.props.date.isSameOrBefore(this.props.highlightToDate)) {
+        hlStart = this.props.date;
+        hlEnd = moment(this.props.highlightToDate).add(1, 'quarters');
+      } else {
+        hlStart = moment(this.props.highlightToDate).subtract(1, 'quarters');
+        hlEnd = this.props.date;
       }
-      curr.add(1, 'quarters') && i++;
     }
-    return rows;
+    return React.createElement(Calendar, {
+      "page": this.props.date.year(),
+      "prevDisabled": ((function(_this) {
+        return function(page) {
+          return _this.props.allowedRange && page <= _this.props.allowedRange[0].year();
+        };
+      })(this)),
+      "nextDisabled": ((function(_this) {
+        return function(page) {
+          return _this.props.allowedRange && page + r >= _this.props.allowedRange[1].year();
+        };
+      })(this)),
+      "prevPage": (function(page) {
+        return page - r;
+      }),
+      "nextPage": (function(page) {
+        return page + r;
+      }),
+      "headerRenderer": (function(page) {
+        return page + " - " + (page + r - 1);
+      }),
+      "calStartDate": (function(page) {
+        return moment(page, 'YYYY').startOf('year');
+      }),
+      "calEndDate": (function(page) {
+        return moment(page + r - 1, 'YYYY').endOf('year');
+      }),
+      "calDateIncrement": (function(date) {
+        return date.add(1, 'quarters');
+      }),
+      "calCellsInRow": 4.,
+      "dateIsDisabled": ((function(_this) {
+        return function(date) {
+          return _this.props.allowedRange && !date.isBetween(allowedMin, allowedMax, 'quarter');
+        };
+      })(this)),
+      "dateIsHighlighted": ((function(_this) {
+        return function(date) {
+          return _this.props.highlightToDate && date.isBetween(hlStart, hlEnd, 'quarter');
+        };
+      })(this)),
+      "dateIsSelected": ((function(_this) {
+        return function(date) {
+          return date.format('YYYYQ') === _this.props.date.format('YYYYQ');
+        };
+      })(this)),
+      "dateFormat": (function(date) {
+        return date.format('YYYY-[Q]Q');
+      }),
+      "onDateClick": this._onQuarterClick
+    });
   },
-  _onYearClick: function(e) {
-    return this.props.onChange(moment(e.currentTarget.value));
+  _onQuarterClick: function(value) {
+    return this.props.onChange(moment(value));
   }
 });
 
 
 
-},{"classnames":1,"moment":29,"react":160}],165:[function(require,module,exports){
-var React, cx, moment;
+},{"./Calendar.react":161,"classnames":1,"moment":29,"react":160}],167:[function(require,module,exports){
+var Calendar, React, cx, moment;
 
 React = require('react');
 
@@ -23035,91 +23236,97 @@ moment = require('moment');
 
 cx = require('classnames');
 
+Calendar = require('./Calendar.react');
+
 module.exports = React.createClass({
   propTypes: {
     allowedRange: React.PropTypes.array,
     date: React.PropTypes.object.isRequired,
+    highlightToDate: React.PropTypes.object.isRequired,
     onChange: React.PropTypes.func
   },
-  getInitialState: function() {
-    return {
-      month: moment(this.props.date)
-    };
-  },
   render: function() {
-    var nextDisabled, prevDisabled;
-    prevDisabled = this.props.allowedRange && this.state.month.isSameOrBefore(this.props.allowedRange[0]);
-    nextDisabled = this.props.allowedRange && this.state.month.isSameOrAfter(this.props.allowedRange[1]);
-    return React.createElement("div", {
-      "className": "react-date-ranger-week-picker"
-    }, React.createElement("div", {
-      "className": "react-date-ranger-calendar-toolbar"
-    }, React.createElement("button", {
-      "disabled": prevDisabled,
-      "onClick": this.prevMonth
-    }, "\x3C"), this.state.month.format('MMM YYYY'), React.createElement("button", {
-      "disabled": nextDisabled,
-      "onClick": this.nextMonth
-    }, "\x3E")), React.createElement("table", {
-      "className": "react-date-ranger-calendar"
-    }, React.createElement("tbody", null, this.renderDates())));
-  },
-  nextMonth: function() {
-    return this.setState({
-      month: this.state.month.add(1, 'months')
-    });
-  },
-  prevMonth: function() {
-    return this.setState({
-      month: this.state.month.subtract(1, 'months')
-    });
-  },
-  renderDates: function() {
-    var allowedMax, allowedMin, blurred, cells, curr, disabled, end, i, rows, selected;
-    console.log(this.props.date.format('YYYYWW'));
-    curr = moment(this.state.month).startOf('month').startOf('isoWeek');
-    end = moment(this.state.month).endOf('month').endOf('isoWeek');
+    var allowedMax, allowedMin, hlEnd, hlStart;
     if (this.props.allowedRange) {
-      allowedMin = moment(this.props.allowedRange[0]).subtract(1, 'days');
-      allowedMax = moment(this.props.allowedRange[1]).add(1, 'days');
+      allowedMin = moment(this.props.allowedRange[0]);
+      allowedMax = moment(this.props.allowedRange[1]);
     }
-    i = 1;
-    cells = [];
-    rows = [];
-    while (curr.isSameOrBefore(end)) {
-      disabled = this.props.allowedRange && !curr.isBetween(allowedMin, allowedMax, 'day');
-      blurred = curr.format('YYYYMM') !== this.state.month.format('YYYYMM');
-      selected = curr.format('YYYYWW') === this.props.date.format('YYYYWW');
-      cells.push(React.createElement("td", {
-        "key": i
-      }, React.createElement("button", {
-        "className": cx("day", {
-          "selected": selected,
-          "blurred": blurred
-        }),
-        "onClick": this._onDayClick,
-        "value": moment(curr).startOf('isoWeek').format('YYYY-MM-DD'),
-        "disabled": disabled
-      }, curr.format('D'))));
-      if (i > 0 && i % 7 === 0) {
-        rows.push(React.createElement("tr", {
-          "key": i / 7
-        }, cells));
-        cells = [];
+    if (this.props.highlightToDate) {
+      if (this.props.date.isSameOrBefore(this.props.highlightToDate)) {
+        hlStart = moment(this.props.date);
+        hlEnd = moment(this.props.highlightToDate).add(1, 'weeks').endOf('isoWeek');
+      } else {
+        hlStart = moment(this.props.highlightToDate).subtract(1, 'weeks');
+        hlEnd = moment(this.props.date);
       }
-      curr.add(1, 'days') && i++;
     }
-    return rows;
+    return React.createElement(Calendar, {
+      "page": moment(this.props.date),
+      "prevDisabled": ((function(_this) {
+        return function(page) {
+          return _this.props.allowedRange && page.isSameOrBefore(allowedMin, 'month');
+        };
+      })(this)),
+      "nextDisabled": ((function(_this) {
+        return function(page) {
+          return _this.props.allowedRange && page.isSameOrAfter(allowedMax, 'month');
+        };
+      })(this)),
+      "prevPage": (function(page) {
+        return page.subtract(1, 'months');
+      }),
+      "nextPage": (function(page) {
+        return page.add(1, 'months');
+      }),
+      "headerRenderer": (function(page) {
+        return page.format('MMM YYYY');
+      }),
+      "calStartDate": (function(page) {
+        return moment(page).startOf('month').startOf('isoWeek');
+      }),
+      "calEndDate": (function(page) {
+        return moment(page).endOf('month').endOf('isoWeek');
+      }),
+      "calDateIncrement": (function(date) {
+        date.add(1, 'days');
+        return date;
+      }),
+      "calCellsInRow": 7.,
+      "dateIsDisabled": ((function(_this) {
+        return function(date) {
+          return _this.props.allowedRange && !date.isBetween(allowedMin, allowedMax, 'day');
+        };
+      })(this)),
+      "dateIsHighlighted": ((function(_this) {
+        return function(date) {
+          return _this.props.highlightToDate && date.isBetween(hlStart, hlEnd, 'isoWeek');
+        };
+      })(this)),
+      "dateIsSelected": ((function(_this) {
+        return function(date) {
+          return date.format('YYYYWW') === _this.props.date.format('YYYYWW');
+        };
+      })(this)),
+      "dateIsBlurred": ((function(_this) {
+        return function(date, page) {
+          return date.format('YYYYMM') !== page.format('YYYYMM');
+        };
+      })(this)),
+      "dateFormat": (function(date) {
+        return date.format('DD');
+      }),
+      "onDateClick": this._onDayClick
+    });
   },
-  _onDayClick: function(e) {
-    return this.props.onChange(moment(e.currentTarget.value));
+  _onDayClick: function(value) {
+    return this.props.onChange(moment(value));
   }
 });
 
 
 
-},{"classnames":1,"moment":29,"react":160}],166:[function(require,module,exports){
-var React, cx, moment, rangeSize;
+},{"./Calendar.react":161,"classnames":1,"moment":29,"react":160}],168:[function(require,module,exports){
+var Calendar, React, cx, moment;
 
 React = require('react');
 
@@ -23127,88 +23334,91 @@ moment = require('moment');
 
 cx = require('classnames');
 
-rangeSize = 12;
+Calendar = require('./Calendar.react');
 
 module.exports = React.createClass({
   propTypes: {
     allowedRange: React.PropTypes.array,
     date: React.PropTypes.object.isRequired,
+    highlightToDate: React.PropTypes.object.isRequired,
     onChange: React.PropTypes.func
   },
-  getInitialState: function() {
-    return {
-      year: Math.floor(this.props.date.year() / rangeSize) * rangeSize
-    };
-  },
   render: function() {
-    var nextDisabled, prevDisabled;
-    prevDisabled = this.props.allowedRange && this.state.year <= this.props.allowedRange[0].year();
-    nextDisabled = this.props.allowedRange && this.state.year + rangeSize >= this.props.allowedRange[1].year();
-    return React.createElement("div", {
-      "className": "react-date-ranger-year-picker"
-    }, React.createElement("div", {
-      "className": "react-date-ranger-calendar-toolbar"
-    }, React.createElement("button", {
-      "disabled": prevDisabled,
-      "onClick": this.prevYears
-    }, "\x3C"), this.state.year, "-", this.state.year + rangeSize - 1, React.createElement("button", {
-      "disabled": nextDisabled,
-      "onClick": this.nextYears
-    }, "\x3E")), React.createElement("table", {
-      "className": "react-date-ranger-calendar"
-    }, React.createElement("tbody", null, this.renderDates())));
-  },
-  nextYears: function() {
-    return this.setState({
-      year: this.state.year + rangeSize
-    });
-  },
-  prevYears: function() {
-    return this.setState({
-      year: this.state.year - rangeSize
-    });
-  },
-  renderDates: function() {
-    var allowedMax, allowedMin, cells, curr, disabled, end, i, rows;
-    curr = moment(this.state.year, 'YYYY').startOf('year');
-    end = moment(this.state.year + rangeSize - 1, 'YYYY').endOf('year');
+    var allowedMax, allowedMin, hlEnd, hlStart, r;
+    r = 12;
     if (this.props.allowedRange) {
       allowedMin = moment(this.props.allowedRange[0]).subtract(1, 'years');
       allowedMax = moment(this.props.allowedRange[1]).add(1, 'years');
     }
-    i = 1;
-    cells = [];
-    rows = [];
-    while (curr.isSameOrBefore(end)) {
-      disabled = this.props.allowedRange && !curr.isBetween(allowedMin, allowedMax, 'year');
-      cells.push(React.createElement("td", {
-        "key": i
-      }, React.createElement("button", {
-        "className": cx("year", {
-          "selected": curr.year() === this.props.date.year()
-        }),
-        "onClick": this._onYearClick,
-        "value": curr.format('YYYY-MM-DD'),
-        "disabled": disabled
-      }, curr.format('YYYY'))));
-      if (i > 0 && i % 3 === 0) {
-        rows.push(React.createElement("tr", {
-          "key": i / 3
-        }, cells));
-        cells = [];
+    if (this.props.highlightToDate) {
+      if (this.props.date.isSameOrBefore(this.props.highlightToDate)) {
+        hlStart = this.props.date;
+        hlEnd = moment(this.props.highlightToDate).add(1, 'years');
+      } else {
+        hlStart = moment(this.props.highlightToDate).subtract(1, 'years');
+        hlEnd = this.props.date;
       }
-      curr.add(1, 'years') && i++;
     }
-    return rows;
+    return React.createElement(Calendar, {
+      "page": this.props.date.year(),
+      "prevDisabled": ((function(_this) {
+        return function(page) {
+          return _this.props.allowedRange && page <= _this.props.allowedRange[0].year();
+        };
+      })(this)),
+      "nextDisabled": ((function(_this) {
+        return function(page) {
+          return _this.props.allowedRange && page + r >= _this.props.allowedRange[1].year();
+        };
+      })(this)),
+      "prevPage": (function(page) {
+        return page - r;
+      }),
+      "nextPage": (function(page) {
+        return page + r;
+      }),
+      "headerRenderer": (function(page) {
+        return page + " - " + (page + r - 1);
+      }),
+      "calStartDate": (function(page) {
+        return moment(page, 'YYYY').startOf('year');
+      }),
+      "calEndDate": (function(page) {
+        return moment(page + r - 1, 'YYYY').endOf('year');
+      }),
+      "calDateIncrement": (function(date) {
+        return date.add(1, 'years');
+      }),
+      "calCellsInRow": 3.,
+      "dateIsDisabled": ((function(_this) {
+        return function(date) {
+          return _this.props.allowedRange && !date.isBetween(allowedMin, allowedMax, 'year');
+        };
+      })(this)),
+      "dateIsHighlighted": ((function(_this) {
+        return function(date) {
+          return _this.props.highlightToDate && date.isBetween(hlStart, hlEnd, 'year');
+        };
+      })(this)),
+      "dateIsSelected": ((function(_this) {
+        return function(date) {
+          return date.format('YYYY') === _this.props.date.format('YYYY');
+        };
+      })(this)),
+      "dateFormat": (function(date) {
+        return date.format('YYYY');
+      }),
+      "onDateClick": this._onQuarterClick
+    });
   },
-  _onYearClick: function(e) {
-    return this.props.onChange(moment(e.currentTarget.value));
+  _onQuarterClick: function(value) {
+    return this.props.onChange(moment(value));
   }
 });
 
 
 
-},{"classnames":1,"moment":29,"react":160}],167:[function(require,module,exports){
+},{"./Calendar.react":161,"classnames":1,"moment":29,"react":160}],169:[function(require,module,exports){
 window.React = require('react');
 
 window.ReactDOM = require('react-dom');
@@ -23217,4 +23427,4 @@ window.DateRanger = require('./components/DateRanger.react');
 
 
 
-},{"./components/DateRanger.react":161,"react":160,"react-dom":31}]},{},[167])
+},{"./components/DateRanger.react":162,"react":160,"react-dom":31}]},{},[169])

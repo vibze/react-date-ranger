@@ -1,6 +1,7 @@
 var gulp = require('gulp');
 var gutil = require('gulp-util');
 var cjsx = require('gulp-cjsx');
+var sass = require('gulp-sass');
 var browserify = require('gulp-browserify');
 var rename = require('gulp-rename');
 
@@ -21,7 +22,14 @@ gulp.task('dist-browserify', function(){
       .pipe(gulp.dest('./dist/'))
 });
 
+gulp.task('sass', function(){
+    gulp.src('./src/styles/main.sass')
+      .pipe(sass().on('error', sass.logError))
+      .pipe(gulp.dest('./dist'))
+})
+
 gulp.task('watch', function(){
     gulp.watch('./src/**/*.cjsx', ['dist']);
     gulp.watch('./src/**/*.cjsx', ['dist-browserify']);
+    gulp.watch('./src/**/*.sass', ['sass']);
 });

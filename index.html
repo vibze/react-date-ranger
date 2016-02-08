@@ -2,37 +2,108 @@
 <html>
 
   <head>
+    <link rel="stylesheet" href="index.css" />
     <link rel="stylesheet" href="dist/main.css" />
     <script type="text/javascript" src="dist/main.js"></script>
     <meta http-equiv="content-type" content="text/html; charset=UTF8">
   </head>
 
   <body>
-    <h4>Default settings</h4>
-    <p>
-      Period is month, default range is start and end of current month.
-    </p>
-    <div id="default"></div>
-    <script>
-      ReactDOM.render(
-        React.createElement(DateRanger, {}),
-        document.getElementById('default')
-      );
-    </script>
+    <div class="container">
 
-    <h4>Allowed range</h4>
-    <p>
-      Allowed range is ['2013-01-15', '2018-08-04'].
-    </p>
-    <div id="allowed-range"></div>
-    <script>
-      ReactDOM.render(
-        React.createElement(DateRanger, {
-          allowedRange: ['2013-01-15', '2018-08-04']
-        }),
-        document.getElementById('allowed-range')
-      );
-    </script>
+      <h1>React Date Ranger</h1>
+      <p>
+        This components lets you pick date ranges using common periods used in
+        reporting: year, quarter, month, week and day.
+      </p>
+
+      <h2>Examples</h2>
+
+      <div class="example">
+        <h3>Set allowed range to ['2014-01-15', '2016-08-04']</h3>
+        <div id="allowed-range" class="date-ranger"></div>
+        <p>
+          Current range
+        </p>
+        <div id="allowed-range-output"></div>
+      </div>
+      <script>
+        ReactDOM.render(
+          React.createElement(DateRanger, {
+            allowedRange: ['2015-01-15', '2016-08-04'],
+            onChange: function(range, formatted) {
+              document.getElementById('allowed-range-output').innerHTML = range.join(' - '); }
+          }),
+          document.getElementById('allowed-range')
+        );
+      </script>
+
+      <div class="example">
+        <h3>Limit allowedPeriods</h3>
+        <div id="allowed-periods" class="date-ranger"></div>
+        <p>
+          Current range
+        </p>
+        <div id="allowed-periods-output"></div>
+      </div>
+      <script>
+        ReactDOM.render(
+          React.createElement(DateRanger, {
+            allowedPeriods: 'DMQ',
+            period: 'M',
+            onChange: function(range, formatted) {
+              document.getElementById('allowed-periods-output').innerHTML = range.join(' - '); }
+          }),
+          document.getElementById('allowed-periods')
+        );
+      </script>
+
+      <h2>Component props</h2>
+
+      <table>
+        <tr>
+          <td>allowedRange</td>
+          <td>
+            Array of two strings representing dates. Date picker will be limited
+            by these dates.
+          </td>
+        </tr>
+        <tr>
+          <td>allowedRangeFormats</td>
+          <td>
+            String format for moment.js date parser which will be used to parse
+            allowedRange prop. Default is 'YYYY-MM-DD'.
+          </td>
+        </tr>
+        <tr>
+          <td>allowedPeriods</td>
+          <td>
+            String containing all allowed periods to chose from. Default is 'YQMWD'
+          </td>
+        </tr>
+        <tr>
+          <td>period</td>
+          <td>
+            Preset period. Default is first from of allowed periods.
+          </td>
+        </tr>
+        <tr>
+          <td>range</td>
+          <td>
+            Preset selected range. Default is start and end of preset/default period.
+          </td>
+        </tr>
+        <tr>
+          <td>onChange</td>
+          <td>
+            Change callback is passed `range` parameter. Which is an array of two
+            moment.js objects.
+          </td>
+        </tr>
+
+      </table>
+
+    </div>
   </body>
 
 </html>

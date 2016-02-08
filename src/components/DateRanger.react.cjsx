@@ -8,10 +8,19 @@ DatePickers =
   Q: require('./QuarterPicker.react')
   M: require('./MonthPicker.react')
   W: require('./WeekPicker.react')
+  D: require('./DayPicker.react')
 
 
 getDefaultRange = ->
   [moment().startOf('month'), moment().endOf('month')]
+
+
+momentQueryKeywords =
+  Y: 'year'
+  Q: 'quarter'
+  M: 'month'
+  W: 'isoWeek'
+  D: 'day'
 
 module.exports = React.createClass(
   propTypes:
@@ -20,35 +29,33 @@ module.exports = React.createClass(
     allowedRangeFormat: React.PropTypes.string
     range: React.PropTypes.array
     period: React.PropTypes.string
+    onChange: React.PropTypes.func
 
   getDefaultProps: ->
     allowedPeriods: "YQMWD"
     allowedRange: null
     allowedRangeFormat: 'YYYY-MM-DD'
-    range: getDefaultRange()
-    period: "M"
+    range: null
+    period: null
 
   getInitialState: ->
-    range: @props.range[..]
+    range: @props.range
     period: @props.period
-    showPicker: false
+
+  componentWillMount: ->
+    if @state.period is null
+      @state.period = @props.allowedPeriods[0]
+
+    if @state.range is null
+      @state.range = [
+        moment().startOf(momentQueryKeywords[@state.period]),
+        moment().endOf(momentQueryKeywords[@state.period])
+      ]
+
+  componentDidMount: ->
+    @props.onChange(@state.range)
 
   render: ->
-    <div className="react-date-ranger">
-      <div className="react-date-ranger-display" onClick={@showPicker}>
-        <div className="segment">
-          <label>Период</label>
-          {@renderPeriod(@props.period)}
-        </div>
-        <div className="segment">
-          <label>Диапазон</label>
-          {@props.range.map(@renderDate).join(' - ')}
-        </div>
-      </div>
-      {@renderPanel() if @state.showPicker}
-    </div>
-
-  renderPanel: ->
     DatePicker = DatePickers[@state.period]
 
     if @props.allowedRange
@@ -56,22 +63,20 @@ module.exports = React.createClass(
     else
       null
 
-    <div className="react-date-ranger-panel">
+    <div className="react-date-ranger">
+      <PeriodPicker period={@state.period} allowedPeriods={@props.allowedPeriods} onChange={@_onPeriodChange} />
       <div>
-        <label>Период</label>
-        <PeriodPicker period={@state.period} allowedPeriods={@props.allowedPeriods} onChange={@_onPeriodChange} />
+      <DatePicker
+        allowedRange={parsedAllowedRange}
+        date={@state.range[0]}
+        highlightToDate={@state.range[1]}
+        onChange={@_onFromChange} />
+      <DatePicker
+        allowedRange={parsedAllowedRange}
+        date={@state.range[1]}
+        highlightToDate={@state.range[0]}
+        onChange={@_onToChange} />
       </div>
-      <div>
-        <label>Начало</label>
-        <DatePicker allowedRange={parsedAllowedRange} date={@state.range[0]} onChange={@_onFromChange} />
-      </div>
-      <div>
-        <label>Конец</label>
-        <DatePicker allowedRange={parsedAllowedRange} date={@state.range[1]} onChange={@_onToChange} />
-      </div>
-      <br/>
-      <button onClick={@_onSubmit}>Применить</button>
-      <button onClick={@_onCancel}>Отмена</button>
     </div>
 
   renderDate: (date) ->
@@ -92,29 +97,30 @@ module.exports = React.createClass(
       D: "День"
     dict[period]
 
-  showPicker: ->
-    @setState(showPicker: true)
-
   _onPeriodChange: (newPeriod) ->
-    @setState(period: newPeriod)
+    if newPeriod in ["Y", "Q", "M"]
+      updatedRange = [
+        @state.range[0].endOf('isoWeek').startOf(momentQueryKeywords[newPeriod]),
+        @state.range[1].startOf('isoWeek').endOf(momentQueryKeywords[newPeriod])
+      ]
+    else
+      updatedRange = [
+        @state.range[0].startOf(momentQueryKeywords[newPeriod]),
+        @state.range[1].endOf(momentQueryKeywords[newPeriod])
+      ]
+
+    @setState(
+      period: newPeriod
+      range: updatedRange
+    )
 
   _onFromChange: (newFrom) ->
-    @state.range[0] = newFrom
+    @state.range[0] = newFrom.startOf(momentQueryKeywords[@state.period])
+    @props.onChange(@state.range)
     @forceUpdate()
 
   _onToChange: (newTo) ->
-    @state.range[1] = newTo
+    @state.range[1] = newTo.endOf(momentQueryKeywords[@state.period])
+    @props.onChange(@state.range)
     @forceUpdate()
-
-  _onSubmit: (e) ->
-    @setState(showPicker: false)
-    console.log @state.period
-    console.log @state.range
-
-  _onCancel: (e) ->
-    @setState(showPicker: false)
-    @setState(
-      period: @props.period
-      range: @props.range[..]
-    )
 )

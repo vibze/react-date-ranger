@@ -1,0 +1,26 @@
+body {
+  font: normal 13px 'Helvetica Neue', 'Arial', sans-serif;
+}
+
+.container {
+  margin: auto;
+  text-align: center;
+  width: 600px;
+}
+
+.example {
+  display: inline-block;
+  text-align: left;
+}
+.example h3 {
+  margin-top: 3em;
+}
+.example p {
+  background: #eee;
+  padding: 15px;
+}
+.example .code {
+  background: #ecf4f6;
+  margin: 0 0 0;
+  padding: 15px 15px 3px;
+}
