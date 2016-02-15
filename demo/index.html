@@ -2,9 +2,10 @@
 <html>
 
   <head>
-    <link rel="stylesheet" href="index.css" />
-    <link rel="stylesheet" href="dist/main.css" />
-    <script type="text/javascript" src="dist/main.js"></script>
+    <link rel="stylesheet" href="css/index.css" />
+    <link rel="stylesheet" href="css/date-ranger.css" />
+    <link rel="stylesheet" href="css/date-ranger-theme.css" />
+    <script type="text/javascript" src="js/date-ranger-standalone.js"></script>
     <meta http-equiv="content-type" content="text/html; charset=UTF8">
   </head>
 
@@ -30,8 +31,10 @@
       <script>
         ReactDOM.render(
           React.createElement(DateRanger, {
-            allowedRange: ['2015-01-15', '2016-08-04'],
-            onChange: function(range, formatted) {
+            allowedRange: ['2005-01-15', '2016-08-04'],
+            range: ["2007-05-01", "2015-08-01"],
+            onChange: function(period, range, formatted) {
+              console.log(arguments);
               document.getElementById('allowed-range-output').innerHTML = range.join(' - '); }
           }),
           document.getElementById('allowed-range')
@@ -49,9 +52,8 @@
       <script>
         ReactDOM.render(
           React.createElement(DateRanger, {
-            allowedPeriods: 'DMQ',
-            period: 'M',
-            onChange: function(range, formatted) {
+            period: 'W',
+            onChange: function(period, range, formatted) {
               document.getElementById('allowed-periods-output').innerHTML = range.join(' - '); }
           }),
           document.getElementById('allowed-periods')

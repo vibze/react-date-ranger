@@ -1,7 +1,7 @@
 React = require('react')
 moment = require('moment')
 cx = require('classnames')
-Calendar = require('./Calendar.react')
+Calendar = require('./Calendar')
 
 
 module.exports = React.createClass(
@@ -28,15 +28,15 @@ module.exports = React.createClass(
         hlEnd = @props.date
 
     <Calendar
-      page={@props.date.year()}
+      page={Math.floor(@props.date.year() / r) * r}
       prevDisabled={(page) => @props.allowedRange and page <= @props.allowedRange[0].year()}
-      nextDisabled={(page) => @props.allowedRange and page+r >= @props.allowedRange[1].year()}
+      nextDisabled={(page) => @props.allowedRange and page+r > @props.allowedRange[1].year()}
       prevPage={(page) -> page-r}
       nextPage={(page) -> page+r}
       headerRenderer={(page) -> "#{page} - #{page+r-1}"}
 
-      calStartDate={(page) -> moment(page, 'YYYY').startOf('year')}
-      calEndDate={(page) -> moment(page+r-1, 'YYYY').endOf('year')}
+      calStartDate={(page) -> moment(r * Math.floor(page / r), 'YYYY')}
+      calEndDate={(page) -> moment(r * Math.floor(page / r) + r - 1, 'YYYY')}
       calDateIncrement={(date) -> date.add(1, 'years')}
       calCellsInRow={3}
 

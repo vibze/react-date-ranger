@@ -1,7 +1,7 @@
 React = require('react')
 moment = require('moment')
 cx = require('classnames')
-Calendar = require('./Calendar.react')
+Calendar = require('./Calendar')
 
 
 module.exports = React.createClass(

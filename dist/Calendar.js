@@ -12,10 +12,10 @@ module.exports = React.createClass({
     prevPage: React.PropTypes.func.isRequired,
     nextPage: React.PropTypes.func.isRequired,
     headerRenderer: React.PropTypes.func.isRequired,
-    renderStartDate: React.PropTypes.func.isRequired,
-    renderEndDate: React.PropTypes.func.isRequired,
-    renderDateIncrement: React.PropTypes.func.isRequired,
-    renderCellsInRow: React.PropTypes.number.isRequired,
+    calStartDate: React.PropTypes.func.isRequired,
+    calEndDate: React.PropTypes.func.isRequired,
+    calDateIncrement: React.PropTypes.func.isRequired,
+    calCellsInRow: React.PropTypes.number.isRequired,
     dateIsDisabled: React.PropTypes.func.isRequired,
     dateIsHighlighted: React.PropTypes.func.isRequired,
     dateIsSelected: React.PropTypes.func.isRequired,
@@ -37,26 +37,24 @@ module.exports = React.createClass({
     };
   },
   render: function() {
-    console.log(this.state.page);
     return React.createElement("div", {
       "className": "react-date-ranger-date-picker"
     }, React.createElement("div", {
-      "className": "react-date-ranger-calendar-toolbar"
+      "className": "react-date-ranger-date-picker-toolbar"
     }, React.createElement("button", {
       "disabled": this.props.prevDisabled(this.state.page),
       "onClick": this._onPrevPageClick
-    }, "❮"), this.props.headerRenderer(this.state.page), React.createElement("button", {
+    }, "❮"), React.createElement("span", null, this.props.headerRenderer(this.state.page)), React.createElement("button", {
       "disabled": this.props.nextDisabled(this.state.page),
       "onClick": this._onNextPageClick
     }, "❯")), React.createElement("table", {
-      "className": "react-date-ranger-calendar"
+      "className": "react-date-ranger-date-picker-body"
     }, React.createElement("tbody", null, this.renderDates())));
   },
   renderDates: function() {
     var cells, classString, curr, end, i, rows;
-    curr = this.props.renderStartDate(this.state.page);
-    end = this.props.renderEndDate(this.state.page);
-    console.log(curr.isSameOrBefore(end));
+    curr = this.props.calStartDate(this.state.page);
+    end = this.props.calEndDate(this.state.page);
     i = 1;
     cells = [];
     rows = [];
@@ -64,7 +62,7 @@ module.exports = React.createClass({
       classString = cx({
         "selected": this.props.dateIsSelected(curr),
         "highlighted": this.props.dateIsHighlighted(curr),
-        "blurred": this.props.dateIsBlurred(curr)
+        "blurred": this.props.dateIsBlurred(curr, this.state.page)
       });
       cells.push(React.createElement("td", {
         "key": i
@@ -74,13 +72,13 @@ module.exports = React.createClass({
         "value": curr.format('YYYY-MM-DD'),
         "disabled": this.props.dateIsDisabled(curr)
       }, this.props.dateFormat(curr))));
-      if (i > 0 && i % this.props.renderCellsInRow === 0) {
+      if (i > 0 && i % this.props.calCellsInRow === 0) {
         rows.push(React.createElement("tr", {
-          "key": i / this.props.renderCellsInRow
+          "key": i / this.props.calCellsInRow
         }, cells));
         cells = [];
       }
-      this.props.renderDateIncrement(curr) && i++;
+      this.props.calDateIncrement(curr) && i++;
     }
     return rows;
   },

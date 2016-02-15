@@ -1,21 +1,26 @@
 {
   "name": "react-date-ranger",
-  "version": "1.0.0",
-  "description": "React date ranger",
-  "main": "index.js",
+  "version": "0.1.1",
+  "description": "A date range picker widget for common periods used in enterprise reporting: Year, Quarter, Month, Week and Day.",
+  "main": "dist/DateRanger.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "prepublish": "gulp demo:compile"
   },
   "author": "vten",
   "license": "MIT",
   "devDependencies": {
-    "coffee-reactify": "^4.0.0",
+    "browserify": "^13.0.0",
+    "coffee-react": "^4.1.0",
+    "coffee-react-transform": "^3.3.0",
     "gulp": "^3.9.0",
-    "gulp-browserify": "^0.5.1",
     "gulp-cjsx": "^3.0.0",
+    "gulp-clean": "^0.3.1",
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^2.2.0",
-    "gulp-util": "^3.0.7"
+    "gulp-util": "^3.0.7",
+    "react-addons-test-utils": "^0.14.7",
+    "vinyl-source-stream": "^1.1.0"
   },
   "dependencies": {
     "classnames": "^2.2.3",
@@ -23,5 +28,27 @@
     "react": "^0.14.3",
     "react-dom": "^0.14.3",
     "underscore": "^1.8.3"
+  },
+  "jest": {
+    "unmockedModulePathPatterns": [
+      "<rootDir>/node_modules/react",
+      "<rootDir>/node_modules/fbjs",
+      "<rootDir>/node_modules/react-dom",
+      "<rootDir>/node_modules/react-addons-test-utils",
+      "<rootDir>/node_modules/classnames",
+      "<rootDir>/node_modules/moment",
+      "<rootDir>/src"
+    ],
+    "scriptPreprocessor": "preprocessor.js",
+    "testFileExtensions": [
+      "coffee",
+      "cjsx",
+      "js"
+    ],
+    "moduleFileExtensions": [
+      "coffee",
+      "cjsx",
+      "js"
+    ]
   }
 }

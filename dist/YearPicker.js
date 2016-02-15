@@ -6,7 +6,7 @@ moment = require('moment');
 
 cx = require('classnames');
 
-Calendar = require('./Calendar.react');
+Calendar = require('./Calendar');
 
 module.exports = React.createClass({
   propTypes: {
@@ -16,79 +16,74 @@ module.exports = React.createClass({
     onChange: React.PropTypes.func
   },
   render: function() {
-    var allowedMax, allowedMin, hlEnd, hlStart;
+    var allowedMax, allowedMin, hlEnd, hlStart, r;
+    r = 12;
     if (this.props.allowedRange) {
-      allowedMin = moment(this.props.allowedRange[0]);
-      allowedMax = moment(this.props.allowedRange[1]);
+      allowedMin = moment(this.props.allowedRange[0]).subtract(1, 'years');
+      allowedMax = moment(this.props.allowedRange[1]).add(1, 'years');
     }
     if (this.props.highlightToDate) {
       if (this.props.date.isSameOrBefore(this.props.highlightToDate)) {
-        hlStart = moment(this.props.date);
-        hlEnd = moment(this.props.highlightToDate).add(1, 'weeks').endOf('isoWeek');
+        hlStart = this.props.date;
+        hlEnd = moment(this.props.highlightToDate).add(1, 'years');
       } else {
-        hlStart = moment(this.props.highlightToDate).subtract(1, 'weeks');
-        hlEnd = moment(this.props.date);
+        hlStart = moment(this.props.highlightToDate).subtract(1, 'years');
+        hlEnd = this.props.date;
       }
     }
     return React.createElement(Calendar, {
-      "page": moment(this.props.date),
+      "page": Math.floor(this.props.date.year() / r) * r,
       "prevDisabled": ((function(_this) {
         return function(page) {
-          return _this.props.allowedRange && page.isSameOrBefore(allowedMin, 'month');
+          return _this.props.allowedRange && page <= _this.props.allowedRange[0].year();
         };
       })(this)),
       "nextDisabled": ((function(_this) {
         return function(page) {
-          return _this.props.allowedRange && page.isSameOrAfter(allowedMax, 'month');
+          return _this.props.allowedRange && page + r > _this.props.allowedRange[1].year();
         };
       })(this)),
       "prevPage": (function(page) {
-        return page.subtract(1, 'months');
+        return page - r;
       }),
       "nextPage": (function(page) {
-        return page.add(1, 'months');
+        return page + r;
       }),
       "headerRenderer": (function(page) {
-        return page.format('MMM YYYY');
+        return page + " - " + (page + r - 1);
       }),
       "calStartDate": (function(page) {
-        return moment(page).startOf('month').startOf('isoWeek');
+        return moment(r * Math.floor(page / r), 'YYYY');
       }),
       "calEndDate": (function(page) {
-        return moment(page).endOf('month').endOf('isoWeek');
+        return moment(r * Math.floor(page / r) + r - 1, 'YYYY');
       }),
       "calDateIncrement": (function(date) {
-        date.add(1, 'days');
-        return date;
+        return date.add(1, 'years');
       }),
-      "calCellsInRow": 7.,
+      "calCellsInRow": 3.,
       "dateIsDisabled": ((function(_this) {
         return function(date) {
-          return _this.props.allowedRange && !date.isBetween(allowedMin, allowedMax, 'day');
+          return _this.props.allowedRange && !date.isBetween(allowedMin, allowedMax, 'year');
         };
       })(this)),
       "dateIsHighlighted": ((function(_this) {
         return function(date) {
-          return _this.props.highlightToDate && date.isBetween(hlStart, hlEnd, 'isoWeek');
+          return _this.props.highlightToDate && date.isBetween(hlStart, hlEnd, 'year');
         };
       })(this)),
       "dateIsSelected": ((function(_this) {
         return function(date) {
-          return date.format('YYYYWW') === _this.props.date.format('YYYYWW');
-        };
-      })(this)),
-      "dateIsBlurred": ((function(_this) {
-        return function(date, page) {
-          return date.format('YYYYMM') !== page.format('YYYYMM');
+          return date.format('YYYY') === _this.props.date.format('YYYY');
         };
       })(this)),
       "dateFormat": (function(date) {
-        return date.format('DD');
+        return date.format('YYYY');
       }),
-      "onDateClick": this._onDayClick
+      "onDateClick": this._onQuarterClick
     });
   },
-  _onDayClick: function(value) {
+  _onQuarterClick: function(value) {
     return this.props.onChange(moment(value));
   }
 });

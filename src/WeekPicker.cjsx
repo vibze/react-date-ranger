@@ -1,7 +1,7 @@
 React = require('react')
 moment = require('moment')
 cx = require('classnames')
-Calendar = require('./Calendar.react')
+Calendar = require('./Calendar')
 
 
 module.exports = React.createClass(
@@ -19,11 +19,11 @@ module.exports = React.createClass(
 
     if @props.highlightToDate
       if @props.date.isSameOrBefore(@props.highlightToDate)
-        hlStart = moment(@props.date)
-        hlEnd = moment(@props.highlightToDate).add(1, 'days')
+        hlStart = moment(@props.date).startOf('isoWeek')
+        hlEnd = moment(@props.highlightToDate).add(1, 'weeks').endOf('isoWeek')
       else
-        hlStart = moment(@props.highlightToDate).subtract(1, 'days')
-        hlEnd = moment(@props.date)
+        hlStart = moment(@props.highlightToDate).subtract(1, 'weeks').startOf('isoWeek')
+        hlEnd = moment(@props.date).endOf('isoWeek')
 
     <Calendar
       page={moment(@props.date)}
@@ -42,13 +42,13 @@ module.exports = React.createClass(
       calCellsInRow={7}
 
       dateIsDisabled={(date) => @props.allowedRange and not date.isBetween(allowedMin, allowedMax, 'day')}
-      dateIsHighlighted={(date) => @props.highlightToDate and date.isBetween(hlStart, hlEnd, 'day')}
-      dateIsSelected={(date) => date.format('YYYYMMDD') == @props.date.format('YYYYMMDD')}
+      dateIsHighlighted={(date) => @props.highlightToDate and date.isBetween(hlStart, hlEnd, 'isoWeek')}
+      dateIsSelected={(date) => date.isSame(@props.date, 'isoWeek')}
       dateIsBlurred={(date, page) => date.format('YYYYMM') != page.format('YYYYMM')}
       dateFormat={(date) -> date.format('DD')}
 
       onDateClick={@_onDayClick}
-       />
+      />
 
   _onDayClick: (value) ->
     @props.onChange(moment(value))

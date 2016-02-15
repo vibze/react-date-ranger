@@ -1,35 +1,47 @@
+var browserify = require('browserify');
+var source = require('vinyl-source-stream');
 var gulp = require('gulp');
 var gutil = require('gulp-util');
-var cjsx = require('gulp-cjsx');
 var sass = require('gulp-sass');
-var browserify = require('gulp-browserify');
 var rename = require('gulp-rename');
+var clean = require('gulp-clean');
+var cjsx = require('gulp-cjsx');
 
-gulp.task('dist', function(){
-    gulp.src('./src/**/*.cjsx')
+
+gulp.task('dist:clean', function(){
+    return gulp.src('./dist/*')
+      .pipe(clean());
+});
+
+gulp.task('dist:compile', ['dist:clean'], function(){
+    return gulp.src(['src/**/*.cjsx', 'src/**/*.coffee', '!src/__tests__/*'])
       .pipe(cjsx({bare: true}).on('error', gutil.log))
-      .pipe(gulp.dest('./dist/'))
+      .pipe(gulp.dest('dist/'));
 });
 
-gulp.task('dist-browserify', function(){
-    gulp.src('./src/main.coffee', {read: false})
-      .pipe(browserify({
-          transform: ['coffee-reactify'],
-          extensions: ['.coffee', '.cjsx']
-      }))
-      .on('error', console.log.bind(console))
-      .pipe(rename('main.js'))
-      .pipe(gulp.dest('./dist/'))
+gulp.task('demo:js:compile', ['dist:compile'], function(){
+  return browserify('dist/standalone.js')
+    .bundle()
+    .pipe(source('date-ranger-standalone.js'))
+    .pipe(gulp.dest('demo/js/'));
 });
 
-gulp.task('sass', function(){
-    gulp.src('./src/styles/main.sass')
+gulp.task('demo:css:compile', function(){
+    gulp.src('src/styles/main.sass')
       .pipe(sass().on('error', sass.logError))
-      .pipe(gulp.dest('./dist'))
-})
+      .pipe(rename('date-ranger.css'))
+      .pipe(gulp.dest('demo/css/'));
+
+    gulp.src('src/styles/theme.sass')
+      .pipe(sass().on('error', sass.logError))
+      .pipe(rename('date-ranger-theme.css'))
+      .pipe(gulp.dest('demo/css/'));
+});
+
+gulp.task('demo:compile', ['demo:js:compile', 'demo:css:compile'])
 
 gulp.task('watch', function(){
-    gulp.watch('./src/**/*.cjsx', ['dist']);
-    gulp.watch('./src/**/*.cjsx', ['dist-browserify']);
-    gulp.watch('./src/**/*.sass', ['sass']);
+    gulp.watch('./src/**/*.cjsx', ['dist:compile']);
+    gulp.watch('./src/**/*.cjsx', ['demo-compile']);
+    gulp.watch('./src/**/*.sass', ['demo-sass']);
 });

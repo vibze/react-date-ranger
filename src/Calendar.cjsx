@@ -33,12 +33,12 @@ module.exports = React.createClass(
 
   render: ->
     <div className="react-date-ranger-date-picker">
-      <div className="react-date-ranger-calendar-toolbar">
+      <div className="react-date-ranger-date-picker-toolbar">
         <button disabled={@props.prevDisabled(@state.page)} onClick={@_onPrevPageClick}>❮</button>
-        {@props.headerRenderer(@state.page)}
+        <span>{@props.headerRenderer(@state.page)}</span>
         <button disabled={@props.nextDisabled(@state.page)} onClick={@_onNextPageClick}>❯</button>
       </div>
-      <table className="react-date-ranger-calendar">
+      <table className="react-date-ranger-date-picker-body">
         <tbody>
           {@renderDates()}
         </tbody>

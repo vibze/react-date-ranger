@@ -1,0 +1,38 @@
+.react-date-ranger {
+  background: #fff;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.2); }
+
+.react-date-ranger-period-picker button {
+  background: #f0f6f7;
+  border: none; }
+  .react-date-ranger-period-picker button:hover {
+    background: #839eb0;
+    color: #fff; }
+  .react-date-ranger-period-picker button.selected {
+    background: #febc9c; }
+
+.react-date-ranger-date-picker-toolbar {
+  background: #fa6551;
+  color: #fff; }
+  .react-date-ranger-date-picker-toolbar button {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    border: none;
+    color: #fff; }
+    .react-date-ranger-date-picker-toolbar button:hover {
+      background: rgba(0, 0, 0, 0.3); }
+
+.react-date-ranger-date-picker-body button {
+  background: #fff;
+  border: none; }
+  .react-date-ranger-date-picker-body button:hover:not(:disabled) {
+    background: #839eb0;
+    color: #fff; }
+  .react-date-ranger-date-picker-body button:disabled {
+    background: none; }
+  .react-date-ranger-date-picker-body button.selected {
+    background: #febc9c; }
+  .react-date-ranger-date-picker-body button.highlighted {
+    background: #ffd8c6; }
+  .react-date-ranger-date-picker-body button.blurred {
+    opacity: 0.5; }

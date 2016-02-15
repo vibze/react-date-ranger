@@ -6,7 +6,7 @@ moment = require('moment');
 
 cx = require('classnames');
 
-Calendar = require('./Calendar.react');
+Calendar = require('./Calendar');
 
 module.exports = React.createClass({
   propTypes: {
@@ -18,77 +18,71 @@ module.exports = React.createClass({
   render: function() {
     var allowedMax, allowedMin, hlEnd, hlStart;
     if (this.props.allowedRange) {
-      allowedMin = moment(this.props.allowedRange[0]);
-      allowedMax = moment(this.props.allowedRange[1]);
+      allowedMin = moment(this.props.allowedRange[0]).subtract(1, 'months');
+      allowedMax = moment(this.props.allowedRange[1]).add(1, 'months');
     }
     if (this.props.highlightToDate) {
       if (this.props.date.isSameOrBefore(this.props.highlightToDate)) {
-        hlStart = moment(this.props.date);
-        hlEnd = moment(this.props.highlightToDate).add(1, 'days');
+        hlStart = this.props.date;
+        hlEnd = moment(this.props.highlightToDate).add(1, 'months');
       } else {
-        hlStart = moment(this.props.highlightToDate).subtract(1, 'days');
-        hlEnd = moment(this.props.date);
+        hlStart = moment(this.props.highlightToDate).subtract(1, 'months');
+        hlEnd = this.props.date;
       }
     }
     return React.createElement(Calendar, {
-      "page": moment(this.props.date),
+      "page": this.props.date.year(),
       "prevDisabled": ((function(_this) {
         return function(page) {
-          return _this.props.allowedRange && page.isSameOrBefore(allowedMin, 'month');
+          return _this.props.allowedRange && page <= _this.props.allowedRange[0].year();
         };
       })(this)),
       "nextDisabled": ((function(_this) {
         return function(page) {
-          return _this.props.allowedRange && page.isSameOrAfter(allowedMax, 'month');
+          return _this.props.allowedRange && page >= _this.props.allowedRange[1].year();
         };
       })(this)),
       "prevPage": (function(page) {
-        return page.subtract(1, 'months');
+        return page - 1;
       }),
       "nextPage": (function(page) {
-        return page.add(1, 'months');
+        return page + 1;
       }),
       "headerRenderer": (function(page) {
-        return page.format('MMM YYYY');
+        return page;
       }),
       "calStartDate": (function(page) {
-        return moment(page).startOf('month').startOf('isoWeek');
+        return moment(page, 'YYYY').startOf('year');
       }),
       "calEndDate": (function(page) {
-        return moment(page).endOf('month').endOf('isoWeek');
+        return moment(page, 'YYYY').endOf('year');
       }),
       "calDateIncrement": (function(date) {
-        date.add(1, 'days');
-        return date;
+        return date.add(1, 'months');
       }),
-      "calCellsInRow": 7.,
+      "calCellsInRow": 3.,
       "dateIsDisabled": ((function(_this) {
         return function(date) {
-          return _this.props.allowedRange && !date.isBetween(allowedMin, allowedMax, 'day');
+          return _this.props.allowedRange && !date.isBetween(allowedMin, allowedMax, 'month');
         };
       })(this)),
       "dateIsHighlighted": ((function(_this) {
         return function(date) {
-          return _this.props.highlightToDate && date.isBetween(hlStart, hlEnd, 'day');
+          return _this.props.highlightToDate && date.isBetween(hlStart, hlEnd, 'month');
         };
       })(this)),
       "dateIsSelected": ((function(_this) {
         return function(date) {
-          return date.format('YYYYMMDD') === _this.props.date.format('YYYYMMDD');
-        };
-      })(this)),
-      "dateIsBlurred": ((function(_this) {
-        return function(date, page) {
-          return date.format('YYYYMM') !== page.format('YYYYMM');
+          return date.format('YYYYMM') === _this.props.date.format('YYYYMM');
         };
       })(this)),
       "dateFormat": (function(date) {
-        return date.format('DD');
+        return date.format('MMM');
       }),
-      "onDateClick": this._onDayClick
+      "onDateClick": this._onMonthClick
     });
   },
-  _onDayClick: function(value) {
+  _onMonthClick: function(value) {
     return this.props.onChange(moment(value));
   }
 });

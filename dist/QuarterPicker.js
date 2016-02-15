@@ -6,7 +6,7 @@ moment = require('moment');
 
 cx = require('classnames');
 
-Calendar = require('./Calendar.react');
+Calendar = require('./Calendar');
 
 module.exports = React.createClass({
   propTypes: {
@@ -32,7 +32,7 @@ module.exports = React.createClass({
       }
     }
     return React.createElement(Calendar, {
-      "page": this.props.date.year(),
+      "page": Math.floor(this.props.date.year() / r) * r,
       "prevDisabled": ((function(_this) {
         return function(page) {
           return _this.props.allowedRange && page <= _this.props.allowedRange[0].year();
@@ -40,7 +40,7 @@ module.exports = React.createClass({
       })(this)),
       "nextDisabled": ((function(_this) {
         return function(page) {
-          return _this.props.allowedRange && page + r >= _this.props.allowedRange[1].year();
+          return _this.props.allowedRange && page + r > _this.props.allowedRange[1].year();
         };
       })(this)),
       "prevPage": (function(page) {
@@ -53,10 +53,10 @@ module.exports = React.createClass({
         return page + " - " + (page + r - 1);
       }),
       "calStartDate": (function(page) {
-        return moment(page, 'YYYY').startOf('year');
+        return moment(r * Math.floor(page / r), 'YYYY');
       }),
       "calEndDate": (function(page) {
-        return moment(page + r - 1, 'YYYY').endOf('year');
+        return moment(r * Math.floor(page / r) + r - 1, 'YYYY').quarter(4);
       }),
       "calDateIncrement": (function(date) {
         return date.add(1, 'quarters');

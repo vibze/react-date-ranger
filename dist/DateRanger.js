@@ -1,4 +1,4 @@
-var DatePickers, PeriodPicker, React, ReactDOM, cx, getDefaultRange, moment, momentQueryKeywords;
+var PeriodPicker, React, ReactDOM, moment, periods;
 
 React = require('react');
 
@@ -6,29 +6,9 @@ ReactDOM = require('react-dom');
 
 moment = require('moment');
 
-cx = require('classnames');
+periods = require('./periods');
 
-PeriodPicker = require('./PeriodPicker.react');
-
-DatePickers = {
-  Y: require('./YearPicker.react'),
-  Q: require('./QuarterPicker.react'),
-  M: require('./MonthPicker.react'),
-  W: require('./WeekPicker.react'),
-  D: require('./DayPicker.react')
-};
-
-getDefaultRange = function() {
-  return [moment().startOf('month'), moment().endOf('month')];
-};
-
-momentQueryKeywords = {
-  Y: 'year',
-  Q: 'quarter',
-  M: 'month',
-  W: 'isoWeek',
-  D: 'day'
-};
+PeriodPicker = require('./PeriodPicker');
 
 module.exports = React.createClass({
   propTypes: {
@@ -45,7 +25,10 @@ module.exports = React.createClass({
       allowedRange: null,
       allowedRangeFormat: 'YYYY-MM-DD',
       range: null,
-      period: null
+      period: null,
+      onChange: function(range) {
+        return true;
+      }
     };
   },
   getInitialState: function() {
@@ -59,15 +42,28 @@ module.exports = React.createClass({
       this.state.period = this.props.allowedPeriods[0];
     }
     if (this.state.range === null) {
-      return this.state.range = [moment().startOf(momentQueryKeywords[this.state.period]), moment().endOf(momentQueryKeywords[this.state.period])];
+      return this.state.range = [moment().startOf(periods[this.state.period].keyword), moment().endOf(periods[this.state.period].keyword)];
+    } else {
+      return this.state.range = this.state.range.map(function(d) {
+        return moment(d);
+      });
     }
   },
   componentDidMount: function() {
-    return this.props.onChange(this.state.range);
+    return this.props.onChange(this.state.period, this.state.range);
+  },
+  emitOnChange: function() {
+    var ref, updatedRange;
+    if ((ref = this.state.period) === "Y" || ref === "Q" || ref === "M") {
+      updatedRange = [moment(this.state.range[0]).endOf('isoWeek').startOf(periods[this.state.period].keyword), moment(this.state.range[1]).startOf('isoWeek').endOf(periods[this.state.period].keyword)];
+    } else {
+      updatedRange = [moment(this.state.range[0]).startOf(periods[this.state.period].keyword), moment(this.state.range[1]).endOf(periods[this.state.period].keyword)];
+    }
+    return this.props.onChange(this.state.period, updatedRange);
   },
   render: function() {
     var DatePicker, parsedAllowedRange;
-    DatePicker = DatePickers[this.state.period];
+    DatePicker = periods[this.state.period].picker;
     if (this.props.allowedRange) {
       parsedAllowedRange = this.props.allowedRange.map((function(_this) {
         return function(dateString) {
@@ -96,47 +92,21 @@ module.exports = React.createClass({
     })));
   },
   renderDate: function(date) {
-    var dict;
-    dict = {
-      Y: 'YYYY',
-      Q: 'YYYY-[Q]Q',
-      M: 'YYYY-MM',
-      W: 'YYYY-[W]WW',
-      D: 'YYYY-MM-DD'
-    };
-    return date.format(dict[this.props.period]);
+    return date.format(periods[this.props.period].format);
   },
-  renderPeriod: function(period) {
-    var dict;
-    dict = {
-      Y: "Год",
-      Q: "Квартал",
-      M: "Месяц",
-      W: "Неделя",
-      D: "День"
-    };
-    return dict[period];
-  },
-  _onPeriodChange: function(newPeriod) {
-    var updatedRange;
-    if (newPeriod === "Y" || newPeriod === "Q" || newPeriod === "M") {
-      updatedRange = [this.state.range[0].endOf('isoWeek').startOf(momentQueryKeywords[newPeriod]), this.state.range[1].startOf('isoWeek').endOf(momentQueryKeywords[newPeriod])];
-    } else {
-      updatedRange = [this.state.range[0].startOf(momentQueryKeywords[newPeriod]), this.state.range[1].endOf(momentQueryKeywords[newPeriod])];
-    }
-    return this.setState({
-      period: newPeriod,
-      range: updatedRange
-    });
+  _onPeriodChange: function(period) {
+    this.state.period = period;
+    this.emitOnChange();
+    return this.forceUpdate();
   },
   _onFromChange: function(newFrom) {
-    this.state.range[0] = newFrom.startOf(momentQueryKeywords[this.state.period]);
-    this.props.onChange(this.state.range);
+    this.state.range[0] = newFrom.startOf(periods[this.state.period].keyword);
+    this.props.onChange(this.state.period, this.state.range);
     return this.forceUpdate();
   },
   _onToChange: function(newTo) {
-    this.state.range[1] = newTo.endOf(momentQueryKeywords[this.state.period]);
-    this.props.onChange(this.state.range);
+    this.state.range[1] = newTo.endOf(periods[this.state.period].keyword);
+    this.props.onChange(this.state.period, this.state.range);
     return this.forceUpdate();
   }
 });
