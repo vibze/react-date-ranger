@@ -13,6 +13,7 @@ module.exports = React.createClass(
     range: React.PropTypes.array
     period: React.PropTypes.string
     onChange: React.PropTypes.func
+    returnSortedRange: React.PropTypes.bool
 
   getDefaultProps: ->
     allowedPeriods: "YQMWD"
@@ -20,6 +21,7 @@ module.exports = React.createClass(
     allowedRangeFormat: 'YYYY-MM-DD'
     range: null
     period: null
+    returnSortedRange: true
     onChange: (range) -> true
 
   getInitialState: ->
@@ -43,16 +45,13 @@ module.exports = React.createClass(
     @props.onChange(@state.period, @state.range)
 
   emitOnChange: ->
-    if @state.period in ["Y", "Q", "M"]
-      updatedRange = [
-        moment(@state.range[0]).endOf('isoWeek').startOf(periods[@state.period].keyword),
-        moment(@state.range[1]).startOf('isoWeek').endOf(periods[@state.period].keyword)
-      ]
-    else
-      updatedRange = [
-        moment(@state.range[0]).startOf(periods[@state.period].keyword),
-        moment(@state.range[1]).endOf(periods[@state.period].keyword)
-      ]
+    updatedRange = @state.range.map((d) -> moment(d))
+    updatedRange.reverse() if updatedRange[0].toDate() > updatedRange[1].toDate() and @props.returnSortedRange
+
+    updatedRange = [
+      updatedRange[0].startOf(periods[@state.period].keyword),
+      updatedRange[1].endOf(periods[@state.period].keyword)
+    ]
 
     @props.onChange(@state.period, updatedRange)
 
@@ -90,11 +89,11 @@ module.exports = React.createClass(
 
   _onFromChange: (newFrom) ->
     @state.range[0] = newFrom.startOf(periods[@state.period].keyword)
-    @props.onChange(@state.period, @state.range)
+    @emitOnChange()
     @forceUpdate()
 
   _onToChange: (newTo) ->
     @state.range[1] = newTo.endOf(periods[@state.period].keyword)
-    @props.onChange(@state.period, @state.range)
+    @emitOnChange()
     @forceUpdate()
 )

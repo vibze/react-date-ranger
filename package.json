@@ -1,6 +1,6 @@
 {
   "name": "react-date-ranger",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A date range picker widget for common periods used in enterprise reporting: Year, Quarter, Month, Week and Day.",
   "main": "dist/DateRanger.js",
   "scripts": {
